@@ -7,7 +7,7 @@ build: clean
 	go install ./feed-publisher/feed-publisher.go
 
 run: build
-	PORT=${PORT} ./feed-publisher/feed-publisher
+	PORT=${PORT} ./bin/feed-publisher
 
 test:
 	go test -race ./...
