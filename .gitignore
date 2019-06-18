@@ -14,3 +14,7 @@
 .idea/
 bin/
 *.iml
+pkg/
+*.a
+src/github.com/
+src/golang.org/
