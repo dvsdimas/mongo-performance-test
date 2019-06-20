@@ -3,13 +3,14 @@ package main
 import (
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
+	"msq.ai/data"
 	"msq.ai/feed/test/generator"
 	"msq.ai/helper/config"
 	"os"
-	"time"
 )
 
 const propFileName string = "feed-publisher.properties"
+const bufferSize int16 = 1000 // TODO !!!
 
 var defaultProperties = map[string]string{"key1": "value1",
 	"key2": "value2"}
@@ -32,7 +33,7 @@ func main() {
 
 	pwd, _ := os.Getwd()
 
-	log.Info("Current folder is [" + pwd + "]")
+	log.Debug("Current folder is [" + pwd + "]")
 
 	properties := config.LoadProperties(propFileName, prop.LoadMap(defaultProperties))
 
@@ -40,7 +41,19 @@ func main() {
 		log.Fatal("Properties has been set !!!")
 	}
 
-	generator.MakeFeedGenerator(properties)()
+	quotes := make(chan *data.Quote, bufferSize)
+	signals := make(chan bool)
 
-	time.Sleep(1 * time.Second)
+	generator.MakeFeedGenerator(properties, quotes, signals)()
+
+	signals <- true
+
+	for {
+
+		quote := <-quotes
+
+		log.Info("quote [" + quote.Instrument + "]")
+	}
+
+	//time.Sleep(1 * time.Second)
 }
