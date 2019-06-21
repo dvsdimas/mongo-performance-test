@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
@@ -81,7 +82,9 @@ func main() {
 
 		quote := <-quotesIn
 
-		log.Trace("quote [" + quote.Instrument + "]")
+		quoteStr := fmt.Sprintf("%#v", quote)
+
+		log.Trace("quote [" + quoteStr + "]")
 
 		send(quote)
 

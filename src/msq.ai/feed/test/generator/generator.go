@@ -63,9 +63,9 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 
 				send(&data.Quote{
 					Source:     0,
-					Instrument: "Asddd",
-					Bid:        0,
-					Ask:        0,
+					Instrument: "EUR/USD",
+					Bid:        1.12345,
+					Ask:        1.23456,
 					Time:       time.Now().UnixNano(),
 				})
 
