@@ -4,13 +4,16 @@ import (
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
+	"strconv"
 	"time"
 )
 
-const instrumentsCount string = "instruments.count"
-const name string = "FeedGenerator"
-const feedSourceId string = "feed.source.id"
 const id string = "ID"
+const name string = "FeedGenerator"
+
+const instrumentsCount string = "instruments.count"
+const feedSourceId string = "feed.source.id"
+const quotesPerSecond string = "quotes.per.second"
 
 func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan bool) func() {
 
@@ -36,14 +39,29 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		}
 	}
 
+	parseInt := func(str string) int64 {
+
+		var n int64
+		var err error
+
+		if n, err = strconv.ParseInt(str, 10, 64); err != nil {
+			ctxLog.Fatal("signals chanel is nil !")
+		}
+
+		return n
+	}
+
 	return func() {
 
 		ctxLog.Info("is going to start")
 
-		iCount := prop.MustGet(instrumentsCount)
-		sourceId := prop.MustGet(feedSourceId)
+		iCount := parseInt(prop.MustGet(instrumentsCount))
+		sourceId := parseInt(prop.MustGet(feedSourceId))
+		perSec := parseInt(prop.MustGet(quotesPerSecond))
 
-		ctxLog.Info(instrumentsCount+" = "+iCount+", "+feedSourceId+" = ", sourceId)
+		ctxLog.Info(instrumentsCount+" = "+strconv.FormatInt(iCount, 10)+
+			", "+feedSourceId+" = ", strconv.FormatInt(sourceId, 10)+
+			", "+quotesPerSecond+" = ", strconv.FormatInt(perSec, 10))
 
 		go func() {
 
@@ -69,7 +87,7 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 					Time:       time.Now().UnixNano(),
 				})
 
-				time.Sleep(200 * time.Millisecond)
+				time.Sleep(1000 * time.Millisecond)
 			}
 
 		}()
