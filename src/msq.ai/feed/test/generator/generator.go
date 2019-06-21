@@ -69,7 +69,7 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 					Time:       time.Now().UnixNano(),
 				})
 
-				time.Sleep(1 * time.Second)
+				time.Sleep(200 * time.Millisecond)
 			}
 
 		}()
