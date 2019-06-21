@@ -24,6 +24,10 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		ctxLog.Fatal("out chanel is nil !")
 	}
 
+	if in == nil {
+		ctxLog.Fatal("signals chanel is nil !")
+	}
+
 	send := func(quote *data.Quote) {
 		select {
 		case out <- quote:
@@ -62,7 +66,7 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 					Instrument: "Asddd",
 					Bid:        0,
 					Ask:        0,
-					Time:       0,
+					Time:       time.Now().UnixNano(),
 				})
 
 				time.Sleep(1 * time.Second)
@@ -72,5 +76,3 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 
 	}
 }
-
-//time.Now().UnixNano()

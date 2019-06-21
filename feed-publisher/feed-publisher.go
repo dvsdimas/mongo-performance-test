@@ -4,16 +4,19 @@ import (
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
+	"msq.ai/db/mongo"
 	"msq.ai/feed/test/generator"
 	"msq.ai/helper/config"
 	"os"
+	"strconv"
+	"sync/atomic"
+	"time"
 )
 
 const propFileName string = "feed-publisher.properties"
-const bufferSize int16 = 1000 // TODO !!!
+const bufferSize int16 = 10000 // TODO !!!
 
-var defaultProperties = map[string]string{"key1": "value1",
-	"key2": "value2"}
+var defaultProperties = map[string]string{"key1": "value1", "key2": "value2"}
 
 func init() {
 
@@ -41,19 +44,47 @@ func main() {
 		log.Fatal("Properties has been set !!!")
 	}
 
-	quotes := make(chan *data.Quote, bufferSize)
+	quotesIn := make(chan *data.Quote, bufferSize)
+	quotesOut := make(chan *data.Quote, bufferSize)
 	signals := make(chan bool)
 
-	generator.MakeFeedGenerator(properties, quotes, signals)()
+	send := func(quote *data.Quote) {
+		select {
+		case quotesOut <- quote:
+		default:
+			log.Fatal("out chanel buffer is overflowed !!!")
+		}
+	}
 
-	signals <- true
+	generator.MakeFeedGenerator(properties, quotesIn, signals)()
+	mongo.MakeMongoConnector(properties, quotesOut, signals)()
+
+	var counter uint64 = 0
+
+	go func() {
+
+		var prev uint64 = 0
+
+		for {
+
+			var delta uint64
+
+			delta, prev = counter-prev, counter
+
+			log.Info("Producing [" + strconv.FormatUint(delta, 10) + "] quotes per second ")
+
+			time.Sleep(1 * time.Second)
+		}
+	}()
 
 	for {
 
-		quote := <-quotes
+		quote := <-quotesIn
 
-		log.Info("quote [" + quote.Instrument + "]")
+		log.Trace("quote [" + quote.Instrument + "]")
+
+		send(quote)
+
+		atomic.AddUint64(&counter, 1)
 	}
-
-	//time.Sleep(1 * time.Second)
 }
