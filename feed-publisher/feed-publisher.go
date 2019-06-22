@@ -5,7 +5,7 @@ import (
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
-	"msq.ai/db/mongo"
+	"msq.ai/feed/publisher/db/mongo"
 	"msq.ai/feed/test/generator"
 	"msq.ai/helper/config"
 	"os"
@@ -15,7 +15,7 @@ import (
 )
 
 const propFileName string = "feed-publisher.properties"
-const bufferSize int16 = 1000
+const bufferSize int16 = 10000
 
 var defaultProperties = map[string]string{"key1": "value1", "key2": "value2"}
 
@@ -82,9 +82,7 @@ func main() {
 
 		quote := <-quotesIn
 
-		quoteStr := fmt.Sprintf("%#v", quote)
-
-		log.Trace("quote [" + quoteStr + "]")
+		log.Trace("quote [" + fmt.Sprintf("%#v", quote) + "]")
 
 		send(quote)
 

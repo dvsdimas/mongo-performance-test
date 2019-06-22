@@ -12,7 +12,6 @@ const id string = "ID"
 const name string = "FeedGenerator"
 
 const instrumentsCount string = "instruments.count"
-const feedSourceId string = "feed.source.id"
 const quotesPerSecond string = "quotes.per.second"
 
 func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan bool) func() {
@@ -56,11 +55,9 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		ctxLog.Info("is going to start")
 
 		iCount := parseInt(prop.MustGet(instrumentsCount))
-		sourceId := parseInt(prop.MustGet(feedSourceId))
 		perSec := parseInt(prop.MustGet(quotesPerSecond))
 
 		ctxLog.Info(instrumentsCount+" = "+strconv.FormatInt(iCount, 10)+
-			", "+feedSourceId+" = ", strconv.FormatInt(sourceId, 10)+
 			", "+quotesPerSecond+" = ", strconv.FormatInt(perSec, 10))
 
 		go func() {
@@ -80,10 +77,9 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 			for {
 
 				send(&data.Quote{
-					Source:     0,
-					Instrument: "EUR/USD",
-					Bid:        1.12345,
-					Ask:        1.23456,
+					Instrument: "EUR/USD", // TODO
+					Bid:        1.12345,   // TODO
+					Ask:        1.23456,   // TODO
 					Time:       time.Now().UnixNano(),
 				})
 
