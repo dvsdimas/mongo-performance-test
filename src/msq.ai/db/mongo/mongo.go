@@ -1,8 +1,11 @@
 package mongo
 
 import (
+	"context"
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"msq.ai/data"
 )
 
@@ -34,11 +37,21 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 		//ctxLog.Info(instrumentsCount+" = "+iCount+", "+feedSourceId+" = ", sourceId)
 
+		// connect to DB
+
+		client, err := CreateMongoConnection("mongodb://127.0.0.1:27017")
+
+		if err != nil {
+			ctxLog.Fatal(err)
+		}
+
+		collection := client.Database("afdafasfasfASDfrefd").Collection("asdfasdasd")
+
+		ctxLog.Info(collection)
+
 		go func() {
 
 			ctxLog.Info("has been started ! Connecting to MongoDB")
-
-			// TODO connect to DB
 
 			signals <- true
 
@@ -62,4 +75,36 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 		}()
 
 	}
+}
+
+func CreateMongoConnection(url string) (client *mongo.Client, err error) {
+
+	client, err = mongo.NewClient(options.Client().ApplyURI(url))
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.Connect(context.TODO())
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.Ping(context.TODO(), nil)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return client, nil
+}
+
+func CloseMongoConnection(client *mongo.Client) (err error) {
+
+	if client == nil {
+		return nil
+	}
+
+	return client.Disconnect(context.TODO())
 }
