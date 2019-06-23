@@ -26,7 +26,7 @@ const bufferSize = 10000
 const duration = 50 * time.Millisecond
 const sleepTime = 10 * time.Millisecond
 
-const batchSize = 100 // TODO make configurable
+const batchSize = 10 // TODO make configurable
 
 func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals chan<- bool) func() {
 
@@ -94,7 +94,7 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 							buffer[pointer] = buf[i]
 							pointer++
 
-							if pointer >= bufferSize {
+							if pointer >= bufferSize { // TODO
 								ctxLog.Fatal("buffer overflow !!!")
 							}
 						}
@@ -171,20 +171,54 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 				//------------------------------------------------------------------------------------------------------
 
-				var quotes []interface{}
+				var bs = size / batchSize
 
-				for i := 0; i < size; i++ {
-					quotes = append(quotes, *buf[i])
-					atomic.AddUint64(&counter, 1)
+				for i := 0; i <= bs; i++ {
+
+					var quotes []interface{}
+
+					for j := 0; j < batchSize; j++ {
+
+						index := i*batchSize + j
+
+						if index >= size {
+							break
+						}
+
+						quotes = append(quotes, *buf[index])
+						atomic.AddUint64(&counter, 1)
+					}
+
+					if quotes == nil {
+						break
+					}
+
+					res, err := collection.InsertMany(context.TODO(), quotes)
+
+					if err != nil {
+						ctxLog.Fatal(err)
+					}
+
+					ctxLog.Trace("Inserted IDs", res.InsertedIDs)
+
 				}
 
-				res, err := collection.InsertMany(context.TODO(), quotes)
+				//------------------------------------------------------------------------------------------------------
 
-				if err != nil {
-					ctxLog.Fatal(err)
-				}
-
-				ctxLog.Trace("Inserted IDs", res.InsertedIDs)
+				//var quotes []interface{}
+				//
+				//for i := 0; i < size; i++ {
+				//	quotes = append(quotes, *buf[i])
+				//	atomic.AddUint64(&counter, 1)
+				//}
+				//
+				//res, err := collection.InsertMany(context.TODO(), quotes)
+				//
+				//if err != nil {
+				//	ctxLog.Fatal(err)
+				//}
+				//
+				//ctxLog.Trace("Inserted IDs", res.InsertedIDs)
 
 				size = 0
 			}
@@ -217,4 +251,34 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 		signals <- true
 	}
+}
+
+func splitByBatch(buf []*data.Quote, size int, batch int) (ret [][]interface{}) {
+
+	var bs = size / batchSize
+
+	for i := 0; i <= bs; i++ {
+
+		var quotes []interface{}
+
+		for j := 0; j < batchSize; j++ {
+
+			index := i*batchSize + j
+
+			if index >= size {
+				break
+			}
+
+			quotes = append(quotes, *buf[index])
+
+		}
+
+		if quotes == nil {
+			break
+		}
+
+		ret = append(ret, quotes)
+	}
+
+	return ret
 }

@@ -19,3 +19,4 @@ pkg/
 src/github.com/
 src/golang.org/
 src/go.mongodb.org
+src/gotest.tools
