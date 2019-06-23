@@ -28,7 +28,7 @@ func init() {
 
 	log.SetOutput(os.Stdout)
 
-	log.SetLevel(log.TraceLevel)
+	log.SetLevel(log.InfoLevel)
 }
 
 func main() {
@@ -73,6 +73,7 @@ func main() {
 			delta, prev = counter-prev, counter
 
 			log.Info("Producing [" + strconv.FormatUint(delta, 10) + "] quotes per second ")
+			log.Info("GEN [" + strconv.FormatUint(counter, 10) + "] quotes")
 
 			time.Sleep(1 * time.Second)
 		}
