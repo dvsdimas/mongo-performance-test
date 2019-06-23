@@ -44,7 +44,7 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		var err error
 
 		if n, err = strconv.ParseInt(str, 10, 64); err != nil {
-			ctxLog.Fatal("signals chanel is nil !")
+			ctxLog.Fatal("Cannot parse int [" + str + "]")
 		}
 
 		return n

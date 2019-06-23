@@ -22,11 +22,12 @@ const mongodbUrlName string = "mongodb.url"
 const dbName string = "msq"
 
 const bufferSize = 10000
+const smallBufferSize = 100
 
 const duration = 50 * time.Millisecond
 const sleepTime = 10 * time.Millisecond
 
-const batchSize = 10 // TODO make configurable ????
+const batchSizeName = "mongodb.batchSize"
 
 func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals chan<- bool) func() {
 
@@ -44,15 +45,29 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 		ctxLog.Fatal("in chanel is nil !")
 	}
 
+	parseInt := func(str string) int {
+
+		var n int
+		var err error
+
+		if n, err = strconv.Atoi(str); err != nil {
+			ctxLog.Fatal("Cannot parse int [" + str + "]")
+		}
+
+		return n
+	}
+
 	return func() {
 
 		ctxLog.Info("is going to start")
 
 		feedProvider := prop.MustGet(feedProviderName)
 		mongodbUrl := prop.MustGet(mongodbUrlName)
+		batchSize := parseInt(prop.MustGet(batchSizeName))
 
 		ctxLog.Info(feedProviderName + " = " + feedProvider + ", " +
-			mongodbUrlName + " = " + mongodbUrl)
+			mongodbUrlName + " = " + mongodbUrl + ", " +
+			batchSizeName + " = " + strconv.Itoa(batchSize))
 
 		//--------------------------------------------------------------------------------------------------------------
 
@@ -116,14 +131,14 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 			var hasQuotes = false
 			var start time.Time
-			var buf [batchSize]*data.Quote
+			var buf [smallBufferSize]*data.Quote
 			var ptr = 0
 
 			var pushIfAfterTimeoutOrSize = func() {
 
 				if hasQuotes {
 
-					if time.Since(start) >= duration || ptr >= batchSize {
+					if time.Since(start) >= duration || ptr >= smallBufferSize {
 
 						mutex.Lock()
 
