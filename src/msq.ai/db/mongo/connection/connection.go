@@ -6,7 +6,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateMongoConnection(url string) (client *mongo.Client, err error) {
+type MongoPoint struct {
+	Client     *mongo.Client
+	Collection *mongo.Collection
+}
+
+func CreateMongoConnection(url string, dbName string, collection string) (mongoPoint *MongoPoint, err error) {
+
+	var client *mongo.Client
 
 	client, err = mongo.NewClient(options.Client().ApplyURI(url))
 
@@ -26,19 +33,14 @@ func CreateMongoConnection(url string) (client *mongo.Client, err error) {
 		return nil, err
 	}
 
-	return client, nil
+	return &MongoPoint{client, client.Database(dbName).Collection(collection)}, nil
 }
 
-func CloseMongoConnection(client *mongo.Client) (err error) {
+func CloseMongoConnection(mongoPoint *MongoPoint) (err error) {
 
-	if client == nil {
+	if mongoPoint == nil || mongoPoint.Client == nil {
 		return nil
 	}
 
-	return client.Disconnect(context.TODO())
-}
-
-func PingMongoConnection(client *mongo.Client) (err error) {
-
-	return client.Ping(context.TODO(), nil)
+	return mongoPoint.Client.Disconnect(context.TODO())
 }

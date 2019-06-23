@@ -5,7 +5,7 @@ import (
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
-	"msq.ai/feed/publisher/db/mongo"
+	feeder "msq.ai/feed/publisher/db/mongo"
 	"msq.ai/feed/test/generator"
 	"msq.ai/helper/config"
 	"os"
@@ -58,7 +58,7 @@ func main() {
 	}
 
 	generator.MakeFeedGenerator(properties, quotesIn, signals)()
-	mongo.MakeMongoConnector(properties, quotesOut, signals)()
+	feeder.MakeMongoConnector(properties, quotesOut, signals)()
 
 	var counter uint64 = 0
 

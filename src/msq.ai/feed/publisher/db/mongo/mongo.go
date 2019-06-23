@@ -6,7 +6,7 @@ import (
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
-	"msq.ai/db/mongo/connection"
+	mongo "msq.ai/db/mongo/connection"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -26,7 +26,7 @@ const bufferSize = 10000
 const duration = 50 * time.Millisecond
 const sleepTime = 10 * time.Millisecond
 
-const batchSize = 10 // TODO make configurable
+const batchSize = 10 // TODO make configurable ????
 
 func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals chan<- bool) func() {
 
@@ -54,15 +54,52 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 		ctxLog.Info(feedProviderName + " = " + feedProvider + ", " +
 			mongodbUrlName + " = " + mongodbUrl)
 
-		ctxLog.Info("Connecting to MongoDB ...")
+		//--------------------------------------------------------------------------------------------------------------
 
-		client, err := connection.CreateMongoConnection(mongodbUrl)
+		var mongoPoint *mongo.MongoPoint
 
-		if err != nil {
-			ctxLog.Fatal(err)
+		reconnect := func() {
+
+			err := mongo.CloseMongoConnection(mongoPoint)
+
+			if err != nil {
+				ctxLog.Error(err)
+			}
+
+			for {
+
+				mongoPoint, err = mongo.CreateMongoConnection(mongodbUrl, dbName, feedProvider)
+
+				if err != nil {
+					ctxLog.Error(err)
+					time.Sleep(1 * time.Second)
+					continue
+				}
+
+				break
+			}
 		}
 
-		collection := client.Database(dbName).Collection(feedProvider)
+		writeToMongo := func(bufQuotes []interface{}) {
+
+			for {
+				_, err := mongoPoint.Collection.InsertMany(context.TODO(), bufQuotes)
+
+				if err == nil {
+					break
+				}
+
+				ctxLog.Error(err)
+				reconnect()
+				continue
+			}
+		}
+
+		//--------------------------------------------------------------------------------------------------------------
+
+		ctxLog.Info("Connecting to MongoDB ...")
+
+		reconnect()
 
 		ctxLog.Info("Connected to MongoDB successfully")
 
@@ -91,12 +128,13 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 						mutex.Lock()
 
 						for i := 0; i < ptr; i++ {
-							buffer[pointer] = buf[i]
-							pointer++
 
 							if pointer >= bufferSize { // TODO
 								ctxLog.Fatal("buffer overflow !!!")
 							}
+
+							buffer[pointer] = buf[i]
+							pointer++
 						}
 
 						mutex.Unlock()
@@ -168,16 +206,9 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 				for _, b := range splitByBatch(buf[0:size], batchSize) {
 
-					res, err := collection.InsertMany(context.TODO(), b)
-
-					if err != nil {
-						ctxLog.Fatal(err)
-					}
+					writeToMongo(b)
 
 					atomic.AddUint64(&counter, uint64(len(b)))
-
-					ctxLog.Trace("Inserted IDs", res.InsertedIDs)
-
 				}
 
 				size = 0

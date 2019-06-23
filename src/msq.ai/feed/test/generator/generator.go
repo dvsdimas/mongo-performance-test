@@ -57,8 +57,8 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		iCount := parseInt(prop.MustGet(instrumentsCount))
 		perSec := parseInt(prop.MustGet(quotesPerSecond))
 
-		ctxLog.Info(instrumentsCount+" = "+strconv.FormatInt(iCount, 10)+
-			", "+quotesPerSecond+" = ", strconv.FormatInt(perSec, 10))
+		ctxLog.Info(instrumentsCount + " = " + strconv.FormatInt(iCount, 10) +
+			", " + quotesPerSecond + " = " + strconv.FormatInt(perSec, 10))
 
 		go func() {
 
