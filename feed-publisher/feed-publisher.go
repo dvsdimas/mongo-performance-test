@@ -73,7 +73,7 @@ func main() {
 			delta, prev = counter-prev, counter
 
 			log.Info("Producing [" + strconv.FormatUint(delta, 10) + "] quotes per second ")
-			log.Info("GEN [" + strconv.FormatUint(counter, 10) + "] quotes")
+			log.Trace("GEN [" + strconv.FormatUint(counter, 10) + "] quotes")
 
 			time.Sleep(1 * time.Second)
 		}

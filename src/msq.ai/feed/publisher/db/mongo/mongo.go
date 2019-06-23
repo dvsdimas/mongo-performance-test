@@ -111,7 +111,6 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 			}
 
 			for {
-
 				select {
 
 				case quote := <-in:
@@ -129,14 +128,12 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 						pushIfAfterTimeoutOrSize()
 					}
-
 				default:
 					{
 						pushIfAfterTimeoutOrSize()
 					}
 
 				}
-
 			}
 
 		}
@@ -169,56 +166,19 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 					continue
 				}
 
-				//------------------------------------------------------------------------------------------------------
+				for _, b := range splitByBatch(buf[0:size], batchSize) {
 
-				var bs = size / batchSize
-
-				for i := 0; i <= bs; i++ {
-
-					var quotes []interface{}
-
-					for j := 0; j < batchSize; j++ {
-
-						index := i*batchSize + j
-
-						if index >= size {
-							break
-						}
-
-						quotes = append(quotes, *buf[index])
-						atomic.AddUint64(&counter, 1)
-					}
-
-					if quotes == nil {
-						break
-					}
-
-					res, err := collection.InsertMany(context.TODO(), quotes)
+					res, err := collection.InsertMany(context.TODO(), b)
 
 					if err != nil {
 						ctxLog.Fatal(err)
 					}
 
+					atomic.AddUint64(&counter, uint64(len(b)))
+
 					ctxLog.Trace("Inserted IDs", res.InsertedIDs)
 
 				}
-
-				//------------------------------------------------------------------------------------------------------
-
-				//var quotes []interface{}
-				//
-				//for i := 0; i < size; i++ {
-				//	quotes = append(quotes, *buf[i])
-				//	atomic.AddUint64(&counter, 1)
-				//}
-				//
-				//res, err := collection.InsertMany(context.TODO(), quotes)
-				//
-				//if err != nil {
-				//	ctxLog.Fatal(err)
-				//}
-				//
-				//ctxLog.Trace("Inserted IDs", res.InsertedIDs)
 
 				size = 0
 			}
@@ -240,8 +200,8 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 				delta, prev = counter-prev, counter
 
-				log.Info("Sending [" + strconv.FormatUint(delta, 10) + "] quotes per second ")
-				log.Info("SENT [" + strconv.FormatUint(counter, 10) + "] quotes")
+				ctxLog.Info("Sending [" + strconv.FormatUint(delta, 10) + "] quotes per second ")
+				ctxLog.Trace("SENT [" + strconv.FormatUint(counter, 10) + "] quotes")
 
 				time.Sleep(1 * time.Second)
 			}
@@ -253,24 +213,23 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 	}
 }
 
-func splitByBatch(buf []*data.Quote, size int, batch int) (ret [][]interface{}) {
+func splitByBatch(buf []*data.Quote, batch int) (ret [][]interface{}) {
 
-	var bs = size / batchSize
+	var bs = len(buf) / batch
 
 	for i := 0; i <= bs; i++ {
 
 		var quotes []interface{}
 
-		for j := 0; j < batchSize; j++ {
+		for j := 0; j < batch; j++ {
 
-			index := i*batchSize + j
+			index := i*batch + j
 
-			if index >= size {
+			if index >= len(buf) {
 				break
 			}
 
 			quotes = append(quotes, *buf[index])
-
 		}
 
 		if quotes == nil {
