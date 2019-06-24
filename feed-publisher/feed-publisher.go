@@ -15,7 +15,7 @@ import (
 )
 
 const propFileName string = "feed-publisher.properties"
-const bufferSize int16 = 10000
+const bufferSize int16 = 100000
 
 var defaultProperties = map[string]string{"key1": "value1", "key2": "value2"}
 
