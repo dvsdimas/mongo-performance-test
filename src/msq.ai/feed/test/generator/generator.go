@@ -3,6 +3,7 @@ package generator
 import (
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"msq.ai/data"
 	"strconv"
 	"time"
@@ -78,6 +79,8 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 
 		batch := len(oneSecondInstruments) / 10
 
+		random := rand.New(rand.NewSource(time.Now().Unix()))
+
 		go func() {
 
 			ctxLog.Info("has been started ! Waiting signal to start")
@@ -107,7 +110,8 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 						q := data.Quote(*oneSecondInstruments[index])
 
 						q.Time = time.Now().UnixNano()
-						// TODO
+						q.Ask = 1 + random.Float64()
+						q.Bid = 1 + random.Float64()
 
 						send(&q)
 					}
