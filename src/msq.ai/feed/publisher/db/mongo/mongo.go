@@ -21,10 +21,10 @@ const mongodbUrlName string = "mongodb.url"
 const dbName string = "msq"
 
 const bufferSize = 10000
-const smallBufferSize = 100
+const smallBufferSize = 1000
 
-const duration = 50 * time.Millisecond
-const sleepTime = 10 * time.Millisecond
+const duration = 200 * time.Millisecond
+const sleepTime = 50 * time.Millisecond
 
 const batchSizeName = "mongodb.batchSize"
 
