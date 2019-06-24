@@ -155,11 +155,10 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 						ptr = 0
 						hasQuotes = false
-						return
 					}
+				} else {
+					time.Sleep(sleepTime)
 				}
-
-				time.Sleep(sleepTime)
 			}
 
 			for {
@@ -167,9 +166,6 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 				case quote := <-in:
 					{
-
-						//ctxLog.Trace("quote [" + fmt.Sprintf("%#v", *quote) + "]")
-
 						if !hasQuotes {
 							hasQuotes = true
 							start = time.Now()
