@@ -14,6 +14,8 @@ const name string = "FeedGenerator"
 const instrumentsCount string = "instruments.count"
 const quotesPerSecond string = "quotes.per.second"
 
+const instrument string = "INSTR"
+
 func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan bool) func() {
 
 	ctxLog := log.WithFields(log.Fields{id: name})
@@ -38,12 +40,12 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		}
 	}
 
-	parseInt := func(str string) int64 {
+	parseInt := func(str string) int {
 
-		var n int64
+		var n int
 		var err error
 
-		if n, err = strconv.ParseInt(str, 10, 64); err != nil {
+		if n, err = strconv.Atoi(str); err != nil {
 			ctxLog.Fatal("Cannot parse int [" + str + "]")
 		}
 
@@ -57,8 +59,27 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		iCount := parseInt(prop.MustGet(instrumentsCount))
 		perSec := parseInt(prop.MustGet(quotesPerSecond))
 
-		ctxLog.Info(instrumentsCount + " = " + strconv.FormatInt(iCount, 10) +
-			", " + quotesPerSecond + " = " + strconv.FormatInt(perSec, 10))
+		ctxLog.Info(instrumentsCount + " = " + strconv.Itoa(iCount) +
+			", " + quotesPerSecond + " = " + strconv.Itoa(perSec))
+
+		instruments := make([]string, iCount)
+
+		for i := 0; i < iCount; i++ {
+			instruments[i] = instrument + strconv.Itoa(i)
+		}
+
+		oneSecondInstruments := make([]string, 0)
+
+		for i := 0; i < perSec; i++ {
+			for j := 0; j < iCount; j++ {
+				oneSecondInstruments = append(oneSecondInstruments, instruments[j])
+			}
+
+		}
+
+		batch := len(oneSecondInstruments) / 10
+
+		ctxLog.Info(oneSecondInstruments)
 
 		go func() {
 
@@ -76,14 +97,33 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 
 			for {
 
-				send(&data.Quote{
-					Instrument: "EUR/USD", // TODO
-					Bid:        1.12345,   // TODO
-					Ask:        1.23456,   // TODO
-					Time:       time.Now().UnixNano(),
-				})
+				for i := 0; i < 10; i++ {
 
-				time.Sleep(1 * time.Millisecond)
+					start := time.Now()
+
+					//------------------------
+
+					for j := 0; j < batch; j++ {
+
+						index := i*batch + j
+
+						send(&data.Quote{
+							Instrument: oneSecondInstruments[index], // TODO
+							Bid:        1.12345,                     // TODO
+							Ask:        1.23456,                     // TODO
+							Time:       time.Now().UnixNano(),
+						})
+
+					}
+
+					//------------------------
+
+					duration := time.Since(start)
+
+					needSleep := 100*time.Millisecond - duration
+
+					time.Sleep(needSleep)
+				}
 			}
 
 		}()
