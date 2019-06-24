@@ -68,18 +68,15 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 			instruments[i] = instrument + strconv.Itoa(i)
 		}
 
-		oneSecondInstruments := make([]string, 0)
+		oneSecondInstruments := make([]*data.Quote, 0)
 
 		for i := 0; i < perSec; i++ {
 			for j := 0; j < iCount; j++ {
-				oneSecondInstruments = append(oneSecondInstruments, instruments[j])
+				oneSecondInstruments = append(oneSecondInstruments, &data.Quote{Instrument: instruments[j]})
 			}
-
 		}
 
 		batch := len(oneSecondInstruments) / 10
-
-		ctxLog.Info(oneSecondInstruments)
 
 		go func() {
 
@@ -107,13 +104,12 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 
 						index := i*batch + j
 
-						send(&data.Quote{
-							Instrument: oneSecondInstruments[index], // TODO
-							Bid:        1.12345,                     // TODO
-							Ask:        1.23456,                     // TODO
-							Time:       time.Now().UnixNano(),
-						})
+						q := data.Quote(*oneSecondInstruments[index])
 
+						q.Time = time.Now().UnixNano()
+						// TODO
+
+						send(&q)
 					}
 
 					//------------------------
