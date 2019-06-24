@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"fmt"
 	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
@@ -169,7 +168,7 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 				case quote := <-in:
 					{
 
-						ctxLog.Trace("quote [" + fmt.Sprintf("%#v", *quote) + "]")
+						//ctxLog.Trace("quote [" + fmt.Sprintf("%#v", *quote) + "]")
 
 						if !hasQuotes {
 							hasQuotes = true

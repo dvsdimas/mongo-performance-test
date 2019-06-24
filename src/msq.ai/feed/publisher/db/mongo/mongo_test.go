@@ -1,9 +1,11 @@
 package mongo
 
 import (
+	"fmt"
 	"gotest.tools/assert"
 	"msq.ai/data"
 	"testing"
+	"time"
 )
 
 func TestSplitByBatch1(t *testing.T) {
@@ -74,4 +76,25 @@ func TestSplitByBatch5(t *testing.T) {
 	assert.Equal(t, len(ret[0]), 2)
 	assert.Equal(t, len(ret[1]), 2)
 	assert.Equal(t, len(ret[2]), 1)
+}
+
+func TestSplitByBatch6(t *testing.T) {
+
+	var buf [bufferSize]*data.Quote
+
+	for i := 0; i < bufferSize; i++ {
+		buf[i] = &data.Quote{}
+	}
+
+	start := time.Now()
+
+	ret := splitByBatch(buf[0:bufferSize], 100)
+
+	fmt.Printf("%v\n", time.Since(start))
+
+	assert.Equal(t, len(ret), 100)
+
+	for i := 0; i < 100; i++ {
+		assert.Equal(t, len(ret[i]), 100)
+	}
 }
