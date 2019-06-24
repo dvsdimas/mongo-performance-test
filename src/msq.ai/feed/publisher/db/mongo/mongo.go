@@ -20,8 +20,8 @@ const mongodbUrlName string = "mongodb.url"
 
 const dbName string = "msq"
 
-const bufferSize = 10000
-const smallBufferSize = 1000
+const bufferSize = 100000
+const smallBufferSize = 10000
 
 const duration = 200 * time.Millisecond
 const sleepTime = 50 * time.Millisecond
