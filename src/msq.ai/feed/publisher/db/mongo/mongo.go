@@ -40,10 +40,6 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 		ctxLog.Fatal("in chanel is nil !")
 	}
 
-	if signals == nil {
-		ctxLog.Fatal("in chanel is nil !")
-	}
-
 	parseInt := func(str string) int {
 
 		var n int
@@ -188,6 +184,8 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 		//--------------------------------------------------------------------------------------------------------------
 
+		var id uint64 = 1
+
 		publisher := func() {
 
 			var buf [bufferSize]*data.Quote
@@ -201,6 +199,14 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 					for i := 0; i < pointer; i++ {
 						buf[i] = buffer[i]
+
+						if buffer[i].Id != id {
+							ctxLog.Fatal("Wrong quote id ! Expected [" + strconv.FormatUint(id, 10) +
+								"], but got [" + strconv.FormatUint(buffer[i].Id, 10) + "]")
+						}
+
+						id++
+
 						size++
 					}
 
@@ -250,7 +256,9 @@ func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals ch
 
 		ctxLog.Info("has been started !")
 
-		signals <- true
+		if signals != nil {
+			signals <- true
+		}
 	}
 }
 

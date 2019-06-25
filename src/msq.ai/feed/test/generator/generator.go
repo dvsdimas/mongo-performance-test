@@ -81,6 +81,8 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 
 		random := rand.New(rand.NewSource(time.Now().Unix()))
 
+		var id uint64 = 1
+
 		go func() {
 
 			ctxLog.Info("has been started ! Waiting signal to start")
@@ -112,6 +114,9 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 						q.Time = time.Now().UnixNano()
 						q.Ask = 1 + random.Float64()
 						q.Bid = 1 + random.Float64()
+						q.Id = id
+
+						id++
 
 						send(&q)
 					}
