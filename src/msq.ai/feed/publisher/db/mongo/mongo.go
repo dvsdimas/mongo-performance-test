@@ -2,8 +2,8 @@ package mongo
 
 import (
 	"context"
-	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
+	"msq.ai/constants"
 	"msq.ai/data"
 	mongo "msq.ai/db/mongo/connection"
 	"strconv"
@@ -15,54 +15,28 @@ import (
 const name string = "MongoFeedPublisher"
 const id string = "ID"
 
-const feedProviderName string = "feed.provider"
-const mongodbUrlName string = "mongodb.url"
-
-const dbName string = "msq"
-
 const bufferSize = 100000
 const smallBufferSize = 10000
 
 const duration = 200 * time.Millisecond
 const sleepTime = 50 * time.Millisecond
 
-const batchSizeName = "mongodb.batchSize"
-
-func MakeMongoConnector(prop *prop.Properties, in <-chan *data.Quote, signals chan<- bool) func() {
+func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, batchSize int,
+	in <-chan *data.Quote, signals chan<- bool) func() {
 
 	ctxLog := log.WithFields(log.Fields{id: name})
 
-	if prop == nil {
-		ctxLog.Fatal("properties is nil !")
-	}
-
 	if in == nil {
 		ctxLog.Fatal("in chanel is nil !")
-	}
-
-	parseInt := func(str string) int {
-
-		var n int
-		var err error
-
-		if n, err = strconv.Atoi(str); err != nil {
-			ctxLog.Fatal("Cannot parse int [" + str + "]")
-		}
-
-		return n
 	}
 
 	return func() {
 
 		ctxLog.Info("is going to start")
 
-		feedProvider := prop.MustGet(feedProviderName)
-		mongodbUrl := prop.MustGet(mongodbUrlName)
-		batchSize := parseInt(prop.MustGet(batchSizeName))
-
-		ctxLog.Info(feedProviderName + " = " + feedProvider + ", " +
-			mongodbUrlName + " = " + mongodbUrl + ", " +
-			batchSizeName + " = " + strconv.Itoa(batchSize))
+		ctxLog.Info(constants.FeedProviderName + " = " + feedProvider + ", " +
+			constants.MongodbUrlName + " = " + mongodbUrl + ", " +
+			constants.BatchSizeName + " = " + strconv.Itoa(batchSize))
 
 		//--------------------------------------------------------------------------------------------------------------
 

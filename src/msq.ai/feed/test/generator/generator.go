@@ -1,9 +1,9 @@
 package generator
 
 import (
-	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
+	"msq.ai/constants"
 	"msq.ai/data"
 	"strconv"
 	"time"
@@ -11,19 +11,11 @@ import (
 
 const id string = "ID"
 const name string = "FeedGenerator"
-
-const instrumentsCount string = "instruments.count"
-const quotesPerSecond string = "quotes.per.second"
-
 const instrument string = "INSTR"
 
-func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan bool) func() {
+func MakeFeedGenerator(instrumentsCount int, quotesPerSecond int, out chan<- *data.Quote, in <-chan bool) func() {
 
 	ctxLog := log.WithFields(log.Fields{id: name})
-
-	if prop == nil {
-		ctxLog.Fatal("properties is nil !")
-	}
 
 	if out == nil {
 		ctxLog.Fatal("out chanel is nil !")
@@ -41,38 +33,23 @@ func MakeFeedGenerator(prop *prop.Properties, out chan<- *data.Quote, in <-chan 
 		}
 	}
 
-	parseInt := func(str string) int {
-
-		var n int
-		var err error
-
-		if n, err = strconv.Atoi(str); err != nil {
-			ctxLog.Fatal("Cannot parse int [" + str + "]")
-		}
-
-		return n
-	}
-
 	return func() {
 
 		ctxLog.Info("is going to start")
 
-		iCount := parseInt(prop.MustGet(instrumentsCount))
-		perSec := parseInt(prop.MustGet(quotesPerSecond))
+		ctxLog.Info(constants.InstrumentsCountName + " = " + strconv.Itoa(instrumentsCount) +
+			", " + constants.QuotesPerSecondName + " = " + strconv.Itoa(quotesPerSecond))
 
-		ctxLog.Info(instrumentsCount + " = " + strconv.Itoa(iCount) +
-			", " + quotesPerSecond + " = " + strconv.Itoa(perSec))
+		instruments := make([]string, instrumentsCount)
 
-		instruments := make([]string, iCount)
-
-		for i := 0; i < iCount; i++ {
+		for i := 0; i < instrumentsCount; i++ {
 			instruments[i] = instrument + strconv.Itoa(i)
 		}
 
 		oneSecondInstruments := make([]*data.Quote, 0)
 
-		for i := 0; i < perSec; i++ {
-			for j := 0; j < iCount; j++ {
+		for i := 0; i < quotesPerSecond; i++ {
+			for j := 0; j < instrumentsCount; j++ {
 				oneSecondInstruments = append(oneSecondInstruments, &data.Quote{Instrument: instruments[j]})
 			}
 		}
