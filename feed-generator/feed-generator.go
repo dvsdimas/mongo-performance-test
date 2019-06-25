@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const propFileName string = "feed-publisher.properties"
+const propFileName string = "feed-generator.properties"
 const bufferSize int32 = 100000
 
 var defaultProperties = map[string]string{"key1": "value1", "key2": "value2"}

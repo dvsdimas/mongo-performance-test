@@ -1,15 +1,15 @@
 PORT?=8000
 
 clean:
-	rm -f ./bin/feed-publisher
-	rm -f ./bin/feed-publisher.properties
+	rm -f ./bin/feed-generator
+	rm -f ./bin/feed-generator.properties
 
 build: clean
-	go install ./feed-publisher/feed-publisher.go
-	cp -n ./etc/feed-publisher.properties ./bin/feed-publisher.properties
+	go install ./feed-generator/feed-generator.go
+	cp -n ./etc/feed-generator.properties ./bin/feed-generator.properties
 
 run: build
-	PORT=${PORT} ./bin/feed-publisher
+	PORT=${PORT} ./bin/feed-generator
 
 test:
 	go test -race ./...
