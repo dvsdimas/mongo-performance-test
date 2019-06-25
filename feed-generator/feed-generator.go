@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	prop "github.com/magiconair/properties"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/data"
 	feeder "msq.ai/feed/publisher/db/mongo"
@@ -16,8 +15,6 @@ import (
 
 const propFileName string = "feed-generator.properties"
 const bufferSize int32 = 100000
-
-var defaultProperties = map[string]string{"key1": "value1", "key2": "value2"}
 
 func init() {
 
@@ -39,11 +36,7 @@ func main() {
 
 	log.Debug("Current folder is [" + pwd + "]")
 
-	properties := config.LoadProperties(propFileName, prop.LoadMap(defaultProperties))
-
-	if properties == nil {
-		log.Fatal("Properties has been set !!!")
-	}
+	properties := config.LoadProperties(propFileName, nil)
 
 	quotesIn := make(chan *data.Quote, bufferSize)
 	quotesOut := make(chan *data.Quote, bufferSize)

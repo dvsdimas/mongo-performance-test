@@ -13,6 +13,10 @@ func LoadProperties(path string, defaultProp *prop.Properties) *prop.Properties 
 
 		log.Warn("Cannot find properties file [" + path + "]. Will use default configuration")
 
+		if defaultProp == nil {
+			log.Fatal("Default properties hasn't been set !")
+		}
+
 		properties = defaultProp
 	}
 
