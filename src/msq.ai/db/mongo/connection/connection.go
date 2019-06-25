@@ -44,3 +44,38 @@ func CloseMongoConnection(mongoPoint *MongoPoint) (err error) {
 
 	return mongoPoint.Client.Disconnect(context.TODO())
 }
+
+func DropMongoDb(url string, dbName string) (ok bool, err error) {
+
+	var client *mongo.Client
+
+	client, err = mongo.NewClient(options.Client().ApplyURI(url))
+
+	if err != nil {
+		return false, err
+	}
+
+	err = client.Connect(context.TODO())
+
+	if err != nil {
+		return false, err
+	}
+
+	err = client.Ping(context.TODO(), nil)
+
+	if err != nil {
+		_ = client.Disconnect(context.TODO())
+		return false, err
+	}
+
+	err = client.Database(dbName).Drop(context.TODO())
+
+	if err != nil {
+		_ = client.Disconnect(context.TODO())
+		return false, err
+	}
+
+	_ = client.Disconnect(context.TODO())
+
+	return true, nil
+}

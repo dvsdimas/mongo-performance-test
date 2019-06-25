@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"msq.ai/constants"
 	"msq.ai/data"
+	"msq.ai/db/mongo/connection"
 	feeder "msq.ai/feed/publisher/db/mongo"
 	"msq.ai/feed/test/generator"
 	"msq.ai/helper/config"
@@ -49,6 +50,8 @@ func main() {
 
 	log.Debug("Current folder is [" + pwd + "]")
 
+	//------------------------------------------------------------------------------------------------------------------
+
 	properties := config.LoadProperties(propFileName, nil)
 
 	feedProvider := properties.MustGet(constants.FeedProviderName)
@@ -56,8 +59,29 @@ func main() {
 	batchSize := parseInt(properties.MustGet(constants.BatchSizeName))
 	dbName := properties.MustGet(constants.DbName)
 
+	dropDB, err := strconv.ParseBool(properties.MustGet(constants.DropDBPropName))
+
+	if err != nil {
+		log.Fatal("Cannot parse bool "+constants.DropDBPropName, err)
+	}
+
 	quotesPerSecond := parseInt(properties.MustGet(constants.QuotesPerSecondName))
 	instrumentsCount := parseInt(properties.MustGet(constants.InstrumentsCountName))
+
+	//------------------------------------------------------------------------------------------------------------------
+
+	if dropDB {
+
+		log.Info("Dropping DB [" + dbName + "] !!!!!!")
+
+		_, err := connection.DropMongoDb(mongodbUrl, dbName)
+
+		if err != nil {
+			log.Fatal("Cannot drop DB [" + dbName + "]")
+		}
+	}
+
+	//------------------------------------------------------------------------------------------------------------------
 
 	quotesIn := make(chan *data.Quote, bufferSize)
 	quotesOut := make(chan *data.Quote, bufferSize)
@@ -74,6 +98,8 @@ func main() {
 	generator.MakeFeedGenerator(instrumentsCount, quotesPerSecond, quotesIn, signals)()
 
 	feeder.MakeMongoConnector(mongodbUrl, dbName, feedProvider, batchSize, quotesOut, signals)()
+
+	//------------------------------------------------------------------------------------------------------------------
 
 	var counter uint64 = 0
 
