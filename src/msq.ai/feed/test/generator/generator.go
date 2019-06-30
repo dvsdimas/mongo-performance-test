@@ -58,8 +58,6 @@ func MakeFeedGenerator(instrumentsCount int, quotesPerSecond int, out chan<- *da
 
 		random := rand.New(rand.NewSource(time.Now().Unix()))
 
-		var id uint64 = 1
-
 		go func() {
 
 			ctxLog.Info("has been started ! Waiting signal to start")
@@ -88,12 +86,13 @@ func MakeFeedGenerator(instrumentsCount int, quotesPerSecond int, out chan<- *da
 
 						q := data.Quote(*oneSecondInstruments[index])
 
-						q.Time = time.Now().UnixNano()
-						q.Ask = 1 + random.Float64()
-						q.Bid = 1 + random.Float64()
-						q.Id = id
+						q.Ask = 1 + random.Float32()
+						q.AskSize = float32(random.Int()) + random.Float32()
+						q.AskTime = time.Now().UnixNano()
 
-						id++
+						q.Bid = 1 + random.Float32()
+						q.BidSize = float32(random.Int()) + random.Float32()
+						q.BidTime = time.Now().UnixNano()
 
 						send(&q)
 					}
