@@ -10,7 +10,7 @@ import (
 
 func TestSplitByBatch1(t *testing.T) {
 
-	var buf [bufferSize]*data.Quote
+	var buf [bufferSize]interface{}
 
 	ret := splitByBatch(buf[0:0], 10)
 
@@ -19,7 +19,7 @@ func TestSplitByBatch1(t *testing.T) {
 
 func TestSplitByBatch2(t *testing.T) {
 
-	var buf [bufferSize]*data.Quote
+	var buf [bufferSize]interface{}
 
 	buf[0] = &data.Quote{}
 
@@ -31,7 +31,7 @@ func TestSplitByBatch2(t *testing.T) {
 
 func TestSplitByBatch3(t *testing.T) {
 
-	var buf [bufferSize]*data.Quote
+	var buf [bufferSize]interface{}
 
 	buf[0] = &data.Quote{}
 	buf[1] = &data.Quote{}
@@ -46,7 +46,7 @@ func TestSplitByBatch3(t *testing.T) {
 
 func TestSplitByBatch4(t *testing.T) {
 
-	var buf [bufferSize]*data.Quote
+	var buf [bufferSize]interface{}
 
 	buf[0] = &data.Quote{}
 	buf[1] = &data.Quote{}
@@ -62,7 +62,7 @@ func TestSplitByBatch4(t *testing.T) {
 
 func TestSplitByBatch5(t *testing.T) {
 
-	var buf [bufferSize]*data.Quote
+	var buf [bufferSize]interface{}
 
 	buf[0] = &data.Quote{}
 	buf[1] = &data.Quote{}
@@ -80,7 +80,9 @@ func TestSplitByBatch5(t *testing.T) {
 
 func TestSplitByBatch6(t *testing.T) {
 
-	var buf [bufferSize]*data.Quote
+	const batch = 1000
+
+	var buf [bufferSize]interface{}
 
 	for i := 0; i < bufferSize; i++ {
 		buf[i] = &data.Quote{}
@@ -88,13 +90,13 @@ func TestSplitByBatch6(t *testing.T) {
 
 	start := time.Now()
 
-	ret := splitByBatch(buf[0:bufferSize], 100)
+	ret := splitByBatch(buf[0:bufferSize], batch)
 
 	fmt.Printf("%v\n", time.Since(start))
 
-	assert.Equal(t, len(ret), 100)
+	assert.Equal(t, len(ret), bufferSize/batch)
 
-	for i := 0; i < 100; i++ {
-		assert.Equal(t, len(ret[i]), 100)
+	for i := 0; i < bufferSize/batch; i++ {
+		assert.Equal(t, len(ret[i]), batch)
 	}
 }

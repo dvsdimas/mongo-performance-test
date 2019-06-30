@@ -4,7 +4,6 @@ import (
 	"context"
 	log "github.com/sirupsen/logrus"
 	"msq.ai/constants"
-	"msq.ai/data"
 	mongo "msq.ai/db/mongo/connection"
 	"strconv"
 	"sync"
@@ -21,8 +20,7 @@ const smallBufferSize = 10000
 const duration = 200 * time.Millisecond
 const sleepTime = 50 * time.Millisecond
 
-func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, batchSize int,
-	in <-chan *data.Quote, signals chan<- bool) func() {
+func MakeMongoPusher(mongodbUrl string, dbName string, tableName string, batchSize int, in <-chan interface{}, signals chan<- bool) func() {
 
 	ctxLog := log.WithFields(log.Fields{id: name})
 
@@ -34,7 +32,7 @@ func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, b
 
 		ctxLog.Info("is going to start")
 
-		ctxLog.Info(constants.FeedProviderName + " = " + feedProvider + ", " +
+		ctxLog.Info(constants.FeedProviderName + " = " + tableName + ", " +
 			constants.MongodbUrlName + " = " + mongodbUrl + ", " +
 			constants.BatchSizeName + " = " + strconv.Itoa(batchSize))
 
@@ -52,7 +50,7 @@ func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, b
 
 			for {
 
-				mongoPoint, err = mongo.CreateMongoConnection(mongodbUrl, dbName, feedProvider)
+				mongoPoint, err = mongo.CreateMongoConnection(mongodbUrl, dbName, tableName)
 
 				if err != nil {
 					ctxLog.Error(err)
@@ -89,7 +87,7 @@ func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, b
 
 		//--------------------------------------------------------------------------------------------------------------
 
-		var buffer [bufferSize]*data.Quote
+		var buffer [bufferSize]interface{}
 		var pointer = 0
 		var mutex = &sync.Mutex{}
 		var counter uint64 = 0
@@ -100,7 +98,7 @@ func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, b
 
 			var hasQuotes = false
 			var start time.Time
-			var buf [smallBufferSize]*data.Quote
+			var buf [smallBufferSize]interface{}
 			var ptr = 0
 
 			var pushIfAfterTimeoutOrSize = func() {
@@ -158,11 +156,9 @@ func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, b
 
 		//--------------------------------------------------------------------------------------------------------------
 
-		var id uint64 = 1
-
 		publisher := func() {
 
-			var buf [bufferSize]*data.Quote
+			var buf [bufferSize]interface{}
 			var size = 0
 
 			for {
@@ -173,14 +169,6 @@ func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, b
 
 					for i := 0; i < pointer; i++ {
 						buf[i] = buffer[i]
-
-						if buffer[i].Id != id {
-							ctxLog.Fatal("Wrong quote id ! Expected [" + strconv.FormatUint(id, 10) +
-								"], but got [" + strconv.FormatUint(buffer[i].Id, 10) + "]")
-						}
-
-						id++
-
 						size++
 					}
 
@@ -236,7 +224,7 @@ func MakeMongoConnector(mongodbUrl string, dbName string, feedProvider string, b
 	}
 }
 
-func splitByBatch(buf []*data.Quote, batch int) (ret [][]interface{}) {
+func splitByBatch(buf []interface{}, batch int) (ret [][]interface{}) {
 
 	var bs = len(buf) / batch
 
@@ -252,7 +240,7 @@ func splitByBatch(buf []*data.Quote, batch int) (ret [][]interface{}) {
 				break
 			}
 
-			quotes = append(quotes, *buf[index])
+			quotes = append(quotes, buf[index])
 		}
 
 		if quotes == nil {

@@ -6,7 +6,7 @@ import (
 	"msq.ai/constants"
 	"msq.ai/data"
 	"msq.ai/db/mongo/connection"
-	feeder "msq.ai/feed/publisher/db/mongo"
+	pusher "msq.ai/feed/publisher/db/mongo"
 	"msq.ai/feed/test/generator"
 	"msq.ai/helper/config"
 	"os"
@@ -84,10 +84,11 @@ func main() {
 	//------------------------------------------------------------------------------------------------------------------
 
 	quotesIn := make(chan *data.Quote, bufferSize)
-	quotesOut := make(chan *data.Quote, bufferSize)
+	quotesOut := make(chan interface{}, bufferSize)
 	signals := make(chan bool)
 
 	send := func(quote *data.Quote) {
+
 		select {
 		case quotesOut <- quote:
 		default:
@@ -97,7 +98,7 @@ func main() {
 
 	generator.MakeFeedGenerator(instrumentsCount, quotesPerSecond, quotesIn, signals)()
 
-	feeder.MakeMongoConnector(mongodbUrl, dbName, feedProvider, batchSize, quotesOut, signals)()
+	pusher.MakeMongoPusher(mongodbUrl, dbName, feedProvider, batchSize, quotesOut, signals)()
 
 	//------------------------------------------------------------------------------------------------------------------
 
